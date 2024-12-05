@@ -1,0 +1,77 @@
+services:
+  mariadb:
+    container_name: mariadb
+    build:
+      context: ./requirements/mariadb
+      args:
+        - MYSQL_DATABASE
+        - MYSQL_USER
+        - MYSQL_PASSWORD
+        - MYSQL_ROOT_PASSWORD
+    image: mariadb:donglee2
+    expose:
+      - 3306
+    networks:
+      - wordpress_network
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  wordpress:
+    container_name: wordpress
+    build:
+      context: ./requirements/wordpress
+      args:
+        DIR: ${DIR}
+    image: wordpress:donglee2
+    expose:
+      - 9000
+    networks:
+      - wordpress_network
+    volumes:
+      - wordpress_data:/var/www/html/wordpress
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      - mariadb
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+    image: nginx:donglee2
+    restart: always
+    networks:
+      - wordpress_network
+    volumes:
+      - wordpress_data:/var/www/html/wordpress
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${DIR}/data/mariadb
+      o: bind
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${DIR}/data/wordpress
+      o: bind
+
+networks:
+  wordpress_network:
