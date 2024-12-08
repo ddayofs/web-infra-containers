@@ -10,7 +10,7 @@ DB_HOST=mariadb
 set -e
 
 # PHP-FPM 설정 파일 복사
-cp /usr/local/etc/php-fpm.d/www.conf /etc/php/*/fpm/pool.d/www.conf
+cp /tmp/php-fpm.d/www.conf /etc/php/*/fpm/pool.d/www.conf
 
 # PHP-FPM 소켓 디렉토리 및 권한 설정
 mkdir -p /run/php
@@ -41,35 +41,39 @@ echo "debug 0"
 # wp-config.php 생성 및 데이터베이스 정보 설정
 if [ ! -f "/var/www/html/wordpress/wp-config.php" ]; then
     cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
-	chown www-data:www-data /var/www/html/wordpress/wp-config.php
-	chmod 755 /var/www/html/wordpress/wp-config.php
+   	echo "Changing ownership of wp-config.php..."
+    chown www-data:www-data /var/www/html/wordpress/wp-config.php || echo "Failed to change ownership"
+    chmod 755 /var/www/html/wordpress/wp-config.php || echo "Failed to change permissions"
+    ls -l /var/www/html/wordpress/wp-config.php
 	echo "Configuring WordPress..."
-    # sed -i "s/database_name_here/$DB_NAME/" /var/www/html/wordpress/wp-config.php
-    # sed -i "s/username_here/$DB_USER/" /var/www/html/wordpress/wp-config.php
-    # sed -i "s/password_here/$DB_PASSWORD/" /var/www/html/wordpress/wp-config.php
-    # sed -i "s/localhost/$DB_HOST/" /var/www/html/wordpress/wp-config.php
+	cp /var/www/html/wordpress/wp-config.php /tmp/wp-config.php
+	sed -i "s/database_name_here/$DB_NAME/" /tmp/wp-config.php
+	sed -i "s/username_here/$DB_USER/" /tmp/wp-config.php
+	sed -i "s/password_here/$DB_PASSWORD/" /tmp/wp-config.php
+	sed -i "s/localhost/$DB_HOST/" /tmp/wp-config.php
+	mv /tmp/wp-config.php /var/www/html/wordpress/wp-config.php
 fi
 
-# echo "debug 1"
-# # 워드프레스 CLI 설치
-# if ! command -v wp &> /dev/null; then
-#   echo "Installing WordPress CLI..."
-#   curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-#   chmod +x wp-cli.phar
-#   mv wp-cli.phar /usr/local/bin/wp
-#   echo "WordPress CLI installed."
-# else
-#   echo "WordPress CLI already installed."
-# fi
+echo "debug 1"
+# 워드프레스 CLI 설치
+if ! command -v wp &> /dev/null; then
+  echo "Installing WordPress CLI..."
+  curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+  chmod +x wp-cli.phar
+  mv wp-cli.phar /usr/local/bin/wp
+  echo "WordPress CLI installed."
+else
+  echo "WordPress CLI already installed."
+fi
 
-# echo "debug 2"
-# # 데이터베이스 연결 확인
-# echo "Waiting for database connection..."
-# until wp db check --path=/var/www/html/wordpress --allow-root; do
-#   sleep 2
-#   echo "Retrying database connection..."
-# done
-# echo "debug 3"
+echo "debug 2"
+# 데이터베이스 연결 확인
+echo "Waiting for database connection..."
+until wp db check --path=/var/www/html/wordpress --allow-root; do
+  sleep 2
+  echo "Retrying database connection..."
+done
+echo "debug 3"
 
 # # 워드프레스 CLI를 사용해 유저 생성
 # wp core install --url="http://localhost" --title="My WordPress Site" \
@@ -83,6 +87,31 @@ fi
 # # 일반 유저 생성
 # wp user create "regular_user" "user@example.com" --role=subscriber --user_pass="userpassword" \
 # 	--path="/var/www/html/wordpress"
+
+# # www-data 사용자로 WordPress CLI 실행
+# # 워드프레스 CLI를 사용해 유저 생성
+# sudo -u www-data wp core install --url="http://localhost" --title="My WordPress Site" \
+#     --admin_user="main_admin" --admin_password="securepassword" \
+#     --admin_email="admin@example.com" --path="/var/www/html/wordpress" --skip-email
+
+# # 관리자 계정 생성
+# sudo -u www-data wp user create "secure_admin" "secure_admin@example.com" --role=administrator \
+#     --user_pass="securepassword" --path="/var/www/html/wordpress"
+
+# # 일반 유저 생성
+# sudo -u www-data wp user create "regular_user" "user@example.com" --role=subscriber \
+#     --user_pass="userpassword" --path="/var/www/html/wordpress"
+
+su -s /bin/bash www-data -c "wp core install --url='http://localhost' \
+    --title='My WordPress Site' --admin_user='main_admin' \
+    --admin_password='securepassword' --admin_email='admin@example.com' \
+    --path='/var/www/html/wordpress' --skip-email"
+
+su -s /bin/bash www-data -c "wp user create 'secure_admin' 'secure_admin@example.com' \
+    --role=administrator --user_pass='securepassword' --path='/var/www/html/wordpress'"
+
+su -s /bin/bash www-data -c "wp user create 'regular_user' 'user@example.com' \
+    --role=subscriber --user_pass='userpassword' --path='/var/www/html/wordpress'"
 
 # PHP-FPM 실행
 exec "$@"
