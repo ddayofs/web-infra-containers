@@ -18,9 +18,9 @@ chown -R www-data:www-data /run/php
 chmod -R 755 /run/php
 
 # /var/www/html 디렉토리 생성 및 권한 설정
-mkdir -p /var/www/html
-chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
+mkdir -p /var/www/html/wordpress
+chown -R www-data:www-data /var/www/html/wordpress
+chmod -R 755 /var/www/html/wordpress
 
 # 워드프레스 다운로드 및 설치
 if [ ! -f "/var/www/html/wordpress/wp-config.php" ]; then
