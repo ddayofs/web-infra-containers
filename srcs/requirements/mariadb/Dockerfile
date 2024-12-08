@@ -1,10 +1,11 @@
+
+# 베이스 이미지로 Debian 사용
+FROM debian:bullseye
+
 ARG MYSQL_ROOT_PASSWORD
 ARG MYSQL_DATABASE
 ARG MYSQL_USER
 ARG MYSQL_PASSWORD
-
-# 베이스 이미지로 Debian 사용
-FROM debian:bullseye
 
 # dumb-init 설치
 RUN apt-get update && \
@@ -18,12 +19,22 @@ RUN apt-get update && \
 # # 실행 권한 부여
 # RUN chmod +x /usr/local/bin/init_mariadb.sh
 
-RUN service mariadb start && \
-	# mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '42';" && \
-	mysql -e "CREATE DATABASE IF NOT EXISTS wordpress_phpfpm_database;" && \
-	mysql -e "CREATE USER IF NOT EXISTS 'donglee2'@'%' IDENTIFIED BY '42';" && \
-	mysql -e "GRANT ALL PRIVILEGES ON wordpress_phpfpm_database.* TO 'donglee2'@'%';" && \
-	mysql -e "FLUSH PRIVILEGES;"
+# # MariaDB 초기화
+# RUN service mariadb start && \
+#     echo "Waiting for MariaDB to initialize..." && \
+#     until mysqladmin ping --silent; do sleep 2; done && \
+#     mysql -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};" && \
+#     mysql -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';" && \
+#     mysql -e "GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';" && \
+    # mysql -e "FLUSH PRIVILEGES;"
+
+RUN	service mariadb start && \
+    # echo "Waiting for MariaDB to initialize..." && \
+    # until mysqladmin ping --silent; do sleep 2; done && \
+    mysql -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};" && \
+    mysql -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';" && \
+    mysql -e "GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';" && \
+    mysql -e "FLUSH PRIVILEGES;"
 
 # MariaDB 포트 노출
 EXPOSE 3306

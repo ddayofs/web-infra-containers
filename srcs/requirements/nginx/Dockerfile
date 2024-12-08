@@ -15,6 +15,8 @@ RUN mkdir -p /etc/nginx/ssl && \
 
 # Nginx 설정 복사
 COPY default.conf /etc/nginx/conf.d/default.conf
+# COPY default.conf /var/www/html/wordpress/
+
 
 # Nginx 포트 노출
 EXPOSE 443

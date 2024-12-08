@@ -10,8 +10,9 @@ RUN apt-get update && \
     apt-get clean
 
 # PHP-FPM 소켓 디렉토리 및 /var/www/html 디렉토리 생성
-RUN mkdir -p /run/php /var/www/html && \
-    chown -R www-data:www-data /run/php /var/www/html
+RUN mkdir -p /run/php /var/www/html/wordpress && \
+    chown -R www-data:www-data /run/php /var/www/html/wordpress && \
+	chmod -R 755 /run/php /var/www/html/wordpress
 
 # 스크립트 파일 복사
 COPY ./script/init_wordpress_phpfpm.sh /usr/local/bin/init_wordpress_phpfpm.sh
@@ -26,6 +27,6 @@ RUN chmod +x /usr/local/bin/init_wordpress_phpfpm.sh
 EXPOSE 9000
 
 # ENTRYPOINT 설정
-# ENTRYPOINT ["dumb-init",  "--", "/usr/local/bin/init_wordpress_phpfpm.sh"]
-ENTRYPOINT ["/usr/local/bin/init_wordpress_phpfpm.sh"]
+ENTRYPOINT ["dumb-init",  "--", "/usr/local/bin/init_wordpress_phpfpm.sh"]
+# ENTRYPOINT ["/usr/local/bin/init_wordpress_phpfpm.sh"]
 CMD ["php-fpm7.4", "-F"]

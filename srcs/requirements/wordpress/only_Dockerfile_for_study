@@ -1,0 +1,70 @@
+
+# 베이스 이미지 설정
+FROM debian:bullseye
+
+# ARG는 빌드 컨텍스트에서 전달받은 인자를 사용할 수 있음
+ARG MYSQL_ROOT_PASSWORD
+ARG MYSQL_DATABASE
+ARG MYSQL_USER
+ARG MYSQL_PASSWORD
+
+# 필요한 패키지 설치
+RUN apt-get update && \
+    apt-get install -y wget curl unzip gnupg2 lsb-release php php-fpm php-mysql vim && \
+    apt-get clean 
+
+# PHP-FPM 소켓 디렉토리 생성 및 권한 설정
+RUN mkdir -p /run/php && \
+    chown -R www-data:www-data /run/php
+	chmod -R 755 /run/php
+
+# /var/www/html 디렉토리 생성
+# p flag: 하위 디렉토리까지 생성
+RUN mkdir -p /var/www/html && \
+	chown -R www-data:www-data /var/www/html
+
+# 워드프레스 다운로드 및 설치
+RUN wget https://wordpress.org/latest.tar.gz && \
+    tar -xzf latest.tar.gz && \
+    mv wordpress /var/www/html/ && \
+    chown -R www-data:www-data /var/www/html/wordpress && \
+    chmod -R 755 /var/www/html/wordpress && \
+    rm latest.tar.gz
+
+# PHP-FPM 설정 변경
+RUN sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/*/fpm/php.ini
+
+# wp-config.php 생성 및 데이터베이스 정보 설정
+RUN cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php && \
+    sed -i "s/database_name_here/${MYSQL_DATABASE}/" /var/www/html/wordpress/wp-config.php && \
+    sed -i "s/username_here/${MYSQL_USER}/" /var/www/html/wordpress/wp-config.php && \
+    sed -i "s/password_here/${MYSQL_PASSWORD}/" /var/www/html/wordpress/wp-config.php && \
+    sed -i "s/localhost/mariadb/" /var/www/html/wordpress/wp-config.php
+
+COPY ./www.conf /etc/php/7.4/fpm/pool.d/www.conf
+
+# PHP-FPM 포트 노출
+EXPOSE 9000
+
+# 워드프레스 CLI 설치
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp
+
+# www-data 사용자로 전환
+USER www-data
+
+# 워드프레스 및 유저 초기화
+RUN wp core install --url="http://localhost" --title="My WordPress Site" \
+    --admin_user="master_user" --admin_password="securepassword" \
+    --admin_email="admin@example.com" --path="/var/www/html/wordpress" --skip-email && \
+    wp user create "team_leader" "team_leader@example.com" --role=administrator --user_pass="leaderpassword" --path="/var/www/html/wordpress" && \
+    wp user create "regular_user" "user@example.com" --role=subscriber --user_pass="userpassword" --path="/var/www/html/wordpress"
+
+# root 사용자로 복귀
+USER root
+
+# PHP-FPM 실행
+# CMD ["php-fpm7.4", "-F", "-R", "--fpm-config", "/etc/php/7.4/fpm/php-fpm.conf", "--listen", "9000"]
+# CMD ["php-fpm7.4"]
+CMD ["php-fpm7.4", "-F"]
