@@ -78,3 +78,4 @@ volumes:
 
 networks:
   wordpress_network:
+    driver: bridge

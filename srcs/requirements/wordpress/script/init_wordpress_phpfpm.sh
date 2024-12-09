@@ -1,13 +1,13 @@
 #!/bin/bash
 
+# 스크립트 실행 중 오류 발생시 스크립트 종료(종료 코드 0이 아닌 경우)
+set -e
+
 # 환경 변수 설정 (필요시 docker-compose.yml에서 전달 가능)
 DB_NAME=${MYSQL_DATABASE:-wordpress_phpfpm_database}
 DB_USER=${MYSQL_USER:-donglee2}
 DB_PASSWORD=${MYSQL_PASSWORD:-42}
 DB_HOST=mariadb
-
-# 스크립트 실행 중 오류 발생시 스크립트 종료(종료 코드 0이 아닌 경우)
-set -e
 
 # PHP-FPM 설정 파일 복사
 cp /tmp/php-fpm.d/www.conf /etc/php/*/fpm/pool.d/www.conf
@@ -56,7 +56,8 @@ fi
 
 echo "debug 1"
 # 워드프레스 CLI 설치
-if ! command -v wp &> /dev/null; then
+# if ! command -v wp &> /dev/null; then
+if ! command -v wp; then
   echo "Installing WordPress CLI..."
   curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
   chmod +x wp-cli.phar
@@ -67,13 +68,22 @@ else
 fi
 
 echo "debug 2"
-# 데이터베이스 연결 확인
-echo "Waiting for database connection..."
-until wp db check --path=/var/www/html/wordpress --allow-root; do
-  sleep 2
-  echo "Retrying database connection..."
-done
-echo "debug 3"
+# # 데이터베이스 연결 확인
+# echo "Waiting for database connection..."
+# until wp db check --path=/var/www/html/wordpress --allow-root; do
+#   sleep 2
+#   echo "Retrying database connection..."
+# done
+
+# # 데이터베이스 연결 확인
+# echo "Waiting for database connection..."
+# su -s /bin/bash www-data -c "wp db check --path=/var/www/html/wordpress"
+# until [ $? -eq 0 ]; do
+#     sleep 2
+#     echo "Retrying database connection..."
+#     su -s /bin/bash www-data -c "wp db check --path=/var/www/html/wordpress"
+# done
+# echo "debug 3"
 
 # # 워드프레스 CLI를 사용해 유저 생성
 # wp core install --url="http://localhost" --title="My WordPress Site" \
@@ -102,17 +112,36 @@ echo "debug 3"
 # sudo -u www-data wp user create "regular_user" "user@example.com" --role=subscriber \
 #     --user_pass="userpassword" --path="/var/www/html/wordpress"
 
-su -s /bin/bash www-data -c "wp core install --url='http://localhost' \
-    --title='My WordPress Site' --admin_user='main_admin' \
-    --admin_password='securepassword' --admin_email='admin@example.com' \
-    --path='/var/www/html/wordpress' --skip-email"
+# su -s /bin/bash www-data -c "wp core install --url='http://localhost' \
+#     --title='My WordPress Site' --admin_user='main_admin' \
+#     --admin_password='securepassword' --admin_email='admin@example.com' \
+#     --path='/var/www/html/wordpress' --skip-email"
 
-su -s /bin/bash www-data -c "wp user create 'secure_admin' 'secure_admin@example.com' \
-    --role=administrator --user_pass='securepassword' --path='/var/www/html/wordpress'"
+# su -s /bin/bash www-data -c "wp user create 'secure_admin' 'secure_admin@example.com' \
+#     --role=administrator --user_pass='securepassword' --path='/var/www/html/wordpress'"
 
-su -s /bin/bash www-data -c "wp user create 'regular_user' 'user@example.com' \
-    --role=subscriber --user_pass='userpassword' --path='/var/www/html/wordpress'"
+# su -s /bin/bash www-data -c "wp user create 'regular_user' 'user@example.com' \
+#     --role=subscriber --user_pass='userpassword' --path='/var/www/html/wordpress'"
+
+# 기존 데이터 확인
+if su -s /bin/bash www-data -c "wp core is-installed --path=/var/www/html/wordpress"; then
+    echo "WordPress is already installed. Skipping installation steps."
+else
+    echo "WordPress is not installed. Running installation steps..."
+    
+    # WordPress 초기화 및 관리자 계정 생성
+    su -s /bin/bash www-data -c "wp core install --url='http://localhost' \
+        --title='My WordPress Site' --admin_user='main_admin' \
+        --admin_password='securepassword' --admin_email='admin@example.com' \
+        --path='/var/www/html/wordpress' --skip-email"
+
+    su -s /bin/bash www-data -c "wp user create 'secure_admin' 'secure_admin@example.com' \
+        --role=administrator --user_pass='securepassword' --path='/var/www/html/wordpress'"
+
+    su -s /bin/bash www-data -c "wp user create 'regular_user' 'user@example.com' \
+        --role=subscriber --user_pass='userpassword' --path='/var/www/html/wordpress'"
+fi
 
 # PHP-FPM 실행
-exec "$@"
+exec $@
 

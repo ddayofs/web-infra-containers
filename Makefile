@@ -40,8 +40,9 @@ add:
 	fi
 
 # re: 컨테이너를 재생성 (중단 및 삭제 후 다시 생성)
-re: fclean all
-
+re: fclean
+	make all
+	
 clean:
 	docker-compose -f ./srcs/docker-compose.yml down || true
 	@sudo sed -i.bak "/$(DOMAIN)/d" $(HOSTS_FILE)
