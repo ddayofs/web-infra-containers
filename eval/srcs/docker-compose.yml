@@ -1,0 +1,66 @@
+services:
+  mariadb:
+    container_name: mariadb
+    build:
+      context: ./requirements/mariadb
+    image: mariadb:donglee2
+    env_file:
+      - .env
+    expose:
+      - 3306
+    networks:
+      - wordpress_network
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    restart: always
+
+  wordpress:
+    container_name: wordpress
+    build:
+      context: ./requirements/wordpress
+
+    image: wordpress:donglee2
+    expose:
+      - 9000
+    networks:
+      - wordpress_network
+    volumes:
+      - wordpress_data:/var/www/html/wordpress
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+    image: nginx:donglee2
+    restart: always
+    networks:
+      - wordpress_network
+    volumes:
+      - wordpress_data:/var/www/html/wordpress
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${DIR}/data/mariadb
+      o: bind
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${DIR}/data/wordpress
+      o: bind
+
+networks:
+  wordpress_network:
+    driver: bridge
