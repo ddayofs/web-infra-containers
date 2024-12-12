@@ -33,7 +33,7 @@ all: add
 
 add:
 	@if ! grep -q "$(DOMAIN)" $(HOSTS_FILE); then \
-		echo "$(IP) $(DOMAIN)" | tee -a $(HOSTS_FILE) > /dev/null; \
+		echo "$(IP) $(DOMAIN)" | sudo tee -a $(HOSTS_FILE) > /dev/null; \
 		echo "Added $(DOMAIN) to $(HOSTS_FILE)."; \
 	else \
 		echo "$(DOMAIN) already exists in $(HOSTS_FILE)."; \
@@ -54,7 +54,6 @@ fclean: clean
 	@echo "Removed $(DOMAIN) from $(HOSTS_FILE). Backup created: $(HOSTS_FILE).bak"
 	sudo rm -rf $(DIR)/data/mariadb/*
 	sudo rm -rf $(DIR)/data/wordpress/*
-	docke
 	docker volume ls -q | xargs -r docker volume rm
 	docker images -qa | xargs -r docker rmi -f
 
@@ -65,10 +64,3 @@ help:
 	@echo "  re     : Recreate containers (stop, remove, then create again)"
 	@echo "  clean  : Stop and remove containers and networks (keep images)"
 	@echo "  fclean : Stop and remove everything (containers, networks, volumes, images)"
-
-
-# 	MACOS -> 하이퍼 바이저 -> 가상머신
-# 	MACOS -> WSL (하이퍼 바이저) -> 도커
-
-# LINUX -> 하이퍼 바이저 -> 가상머신 
-# LINUX -> 도커

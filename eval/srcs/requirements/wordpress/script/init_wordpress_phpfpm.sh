@@ -51,6 +51,10 @@ if [ ! -f "/var/www/html/wordpress/wp-config.php" ]; then
 	sed -i "s/password_here/$DB_PASSWORD/" /tmp/wp-config.php
 	sed -i "s/localhost/$DB_HOST/" /tmp/wp-config.php
 	mv /tmp/wp-config.php /var/www/html/wordpress/wp-config.php
+	# sed -i "s/database_name_here/$DB_NAME/" /var/www/html/wordpresswp-config.php
+	# sed -i "s/username_here/$DB_USER/" /var/www/html/wordpresswp-config.php
+	# sed -i "s/password_here/$DB_PASSWORD/" /var/www/html/wordpresswp-config.php
+	# sed -i "s/localhost/$DB_HOST/" /var/www/html/wordpresswp-config.php
 fi
 
 # 워드프레스 CLI 설치
@@ -93,5 +97,5 @@ else
         --role=subscriber --user_pass='$WP_USER_PW' --path='/var/www/html/wordpress'"
 fi
 
-exec $@
+exec "$@"
 

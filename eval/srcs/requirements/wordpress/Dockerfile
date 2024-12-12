@@ -1,6 +1,3 @@
-# 빌드 컨텍스트에서 전달받은 인자 사용
-ARG DIR
-
 # 베이스 이미지 설정
 FROM debian:bullseye
 

@@ -17,4 +17,4 @@ echo "MariaDB stopped"
 
 # MariaDB 데몬 포그라운드 실행
 echo "Starting MariaDB in foreground..."
-exec $@
+exec "$@"
