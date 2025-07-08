@@ -1,3 +1,3 @@
 ## for Linux
 
-excuttion : type "make"
+excution : type "make"
