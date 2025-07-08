@@ -3,12 +3,9 @@ services:
     container_name: mariadb
     build:
       context: ./requirements/mariadb
-      args:
-        MYSQL_DATABASE: ${MYSQL_DATABASE}
-        MYSQL_USER: ${MYSQL_USER}
-        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     image: mariadb:donglee2
+    env_file:
+      - .env
     expose:
       - 3306
     networks:
@@ -16,21 +13,12 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
     restart: always
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
   wordpress:
     container_name: wordpress
     build:
       context: ./requirements/wordpress
-      args:
-        MYSQL_DATABASE: ${MYSQL_DATABASE}
-        MYSQL_USER: ${MYSQL_USER}
-        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
     image: wordpress:donglee2
     expose:
       - 9000
@@ -39,11 +27,8 @@ services:
     volumes:
       - wordpress_data:/var/www/html/wordpress
     restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    env_file:
+      - .env
     depends_on:
       - mariadb
 

@@ -1,5 +1,5 @@
-DIR = /home/donglee2
-# DIR=/Users/ldk
+# DIR = /home
+DIR=/Users/ldk
 
 HOSTS_FILE=/etc/hosts
 DOMAIN=donglee2.42.fr
@@ -45,17 +45,16 @@ re: fclean
 	
 clean:
 	docker-compose -f ./srcs/docker-compose.yml down || true
-
-
-
-# fclean: 실행 중인 컨테이너, 볼륨, 이미지까지 모두 삭제
-fclean: clean
 	@sudo sed -i.bak "/$(DOMAIN)/d" $(HOSTS_FILE)
 	@echo "Removed $(DOMAIN) from $(HOSTS_FILE). Backup created: $(HOSTS_FILE).bak"
-	sudo rm -rf $(DIR)/data/mariadb/*
-	sudo rm -rf $(DIR)/data/wordpress/*
-	docker volume ls -q | xargs -r docker volume rm
-	docker images -qa | xargs -r docker rmi -f
+
+
+
+# fclean: 실행 중인 컨테이너, 네트워크, 볼륨, 이미지까지 모두 삭제
+fclean: clean
+	rm -rf $(DIR)/data/mariadb/*
+	rm -rf $(DIR)/data/wordpress/*
+	docker rmi -f $$(docker images -qa)
 
 # 도움말
 help:

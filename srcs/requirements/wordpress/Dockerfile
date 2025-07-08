@@ -1,6 +1,3 @@
-# 빌드 컨텍스트에서 전달받은 인자 사용
-ARG DIR
-
 # 베이스 이미지 설정
 FROM debian:bullseye
 
@@ -24,10 +21,9 @@ COPY ./www.conf /tmp/php-fpm.d/www.conf
 # 실행 권한 부여
 RUN chmod +x /tmp/init_wordpress_phpfpm.sh 
 
-# PHP-FPM 포트 노출
-EXPOSE 9000
+# # PHP-FPM 포트 노출
+# EXPOSE 9000
 
 # ENTRYPOINT 설정
 ENTRYPOINT ["dumb-init",  "--", "/tmp/init_wordpress_phpfpm.sh"]
-# ENTRYPOINT ["/tmp/init_wordpress_phpfpm.sh"]
 CMD ["php-fpm7.4", "-F"]

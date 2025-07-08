@@ -13,15 +13,10 @@ COPY ./script/init_mariadb.sh /tmp/init_mariadb.sh
 # 실행 권한 부여
 RUN chmod +x /tmp/init_mariadb.sh
 
-# # MariaDB 관련 디렉토리 권한 설정
-# RUN mkdir -p /run/mysqld && chown -R mysql:mysql /run/mysqld
-
-# MariaDB 포트 노출
-EXPOSE 3306
+# # MariaDB 포트 노출
+# EXPOSE 3306
 
 # ENTRYPOINT를 dumb-init과 init_mariadb.sh로 설정
 ENTRYPOINT ["dumb-init", "--", "/tmp/init_mariadb.sh"]
-# ENTRYPOINT ["/tmp/init_mariadb.sh"]
 CMD ["mysqld", "--bind-address=0.0.0.0"]
 
-# ENTRYPOINT ["mysqld", "--bind-address=0.0.0.0"]
